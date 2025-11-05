@@ -79,9 +79,9 @@ This project is licensed under the MIT License.
 ## 👤 Author
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- LinkedIn: [Your Profile](https://linkedin.com/in/yourprofile)
-- Portfolio: [yourportfolio.com](https://yourportfolio.com)
+- GitHub: [@YagoGomez83(https://github.com/YagoGomez83/)
+- LinkedIn: (https://www.linkedin.com/in/yago-gomez-320087224/)
+- Portfolio: (https://yago-dev.net/)
 
 ---
 
