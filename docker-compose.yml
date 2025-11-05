@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: taskflow_mysql
+    environment:
+      MYSQL_DATABASE: taskflow
+      MYSQL_USER: taskflow_user
+      MYSQL_PASSWORD: secret_password
+      MYSQL_ROOT_PASSWORD: root_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - taskflow_network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: taskflow_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - taskflow_network
+
+  # Laravel Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: taskflow_backend
+    working_dir: /var/www
+    volumes:
+      - ./backend:/var/www
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - taskflow_network
+    environment:
+      - DB_HOST=mysql
+      - REDIS_HOST=redis
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: taskflow_frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    networks:
+      - taskflow_network
+    environment:
+      - VITE_API_URL=http://localhost:8000
+
+volumes:
+  mysql_data:
+
+networks:
+  taskflow_network:
+    driver: bridge
