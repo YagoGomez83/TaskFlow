@@ -45,4 +45,50 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    //jwt
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
+    }
+
+    //relationships
+
+    public function ownedProjects()
+    {
+        return $this->hasMany(Project::class, 'owner_id');
+    }
+
+    public function projects()
+    {
+        return $this->belongsToMany(Project::class)
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    public function assignedTasks()
+    {
+        return $this->hasMany(Task::class, 'assigned_to');
+    }
+
+    public function createdTasks()
+    {
+        return $this->hasMany(Task::class, 'created_by');
+    }
+
+    // Helper methods
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isManager(): bool
+    {
+        return $this->role === 'manager';
+    }
 }
