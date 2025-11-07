@@ -39,12 +39,24 @@ class TaskController extends Controller
     public function store(StoreTaskRequest $request): JsonResponse
     {
         $project = Project::findOrFail($request->project_id);
-        Gate::authorize('view', $project);
+        
+        // Verificar que el usuario es miembro del proyecto
+        $isMember = $project->owner_id === $request->user()->id || 
+                    $project->members()->where('user_id', $request->user()->id)->exists();
+        
+        if (!$isMember) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No eres miembro de este proyecto',
+            ], 403);
+        }
 
         // Get max position for new task
         $maxPos = Task::where('project_id', $request->project_id)
             ->where('status', $request->status ?? 'todo')
-            ->max('position') ?? 0;
+            ->max('position');
+        
+        $position = $maxPos !== null ? $maxPos + 1 : 1;
 
         $task = Task::create([
             'title' => $request->title,
@@ -55,9 +67,10 @@ class TaskController extends Controller
             'assigned_to' => $request->assigned_to,
             'created_by' => $request->user()->id,
             'due_date' => $request->due_date,
-            'position' => $request->position ?? ($maxPos + 1),
+            'position' => $position,
         ]);
 
+        // Cargar relaciones después de crear
         $task->load(['assignedTo:id,name,avatar', 'creator:id,name', 'project:id,name']);
 
         return response()->json([
@@ -116,14 +129,12 @@ class TaskController extends Controller
         $oldStatus = $task->status;
         $newStatus = $request->status;
 
-        // Update positions when moving between columns
         if ($oldStatus !== $newStatus) {
-            // Get max position in new status column
             $maxPos = Task::where('project_id', $task->project_id)
                 ->where('status', $newStatus)
-                ->max('position') ?? 0;
+                ->max('position');
 
-            $task->position = $maxPos + 1;
+            $task->position = $maxPos !== null ? $maxPos + 1 : 1;
         }
 
         $task->status = $newStatus;
@@ -142,7 +153,6 @@ class TaskController extends Controller
     {
         Gate::authorize('assign', $task);
 
-        // Verify user is member of project
         $project = $task->project;
         $isMember = $project->owner_id === $request->user_id ||
                     $project->members()->where('user_id', $request->user_id)->exists();

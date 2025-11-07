@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Task extends Model
 {
@@ -23,48 +24,37 @@ class Task extends Model
 
     protected $casts = [
         'due_date' => 'date',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
     ];
 
-    // Relationships
-    public function project()
+    /**
+     * Get the project that owns the task
+     */
+    public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
     }
 
-    public function assignee()
-    {
-        return $this->belongsTo(User::class, 'assigned_to');
-    }
-
-    public function creator()
+    /**
+     * Get the user who created the task
+     */
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    // Scopes
-    public function scopeByStatus($query, string $status)
+    /**
+     * Get the user assigned to the task
+     */
+    public function assignedTo(): BelongsTo
     {
-        return $query->where('status', $status);
+        return $this->belongsTo(User::class, 'assigned_to');
     }
 
-    public function scopeByPriority($query, string $priority)
+    /**
+     * Alternative: assigned user (same as assignedTo)
+     */
+    public function assignedUser(): BelongsTo
     {
-        return $query->where('priority', $priority);
-    }
-
-    public function scopeOverdue($query)
-    {
-        return $query->where('due_date', '<', now())
-            ->whereNotIn('status', ['done']);
-    }
-
-    // Helper methods
-    public function isOverdue(): bool
-    {
-        return $this->due_date &&
-            $this->due_date->isPast() &&
-            $this->status !== 'done';
+        return $this->belongsTo(User::class, 'assigned_to');
     }
 }
