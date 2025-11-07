@@ -7,10 +7,17 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
+    libicu-dev \
+    libzip-dev \
     zip \
-    unzip
+    unzip \
+    default-mysql-client
+
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
+RUN docker-php-ext-configure intl
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd intl
 
 # Install Composer
@@ -23,10 +30,7 @@ WORKDIR /var/www
 COPY . .
 
 # Install dependencies
-RUN composer install --no-interaction --optimize-autoloader
-
-# Install MySQL client for healthcheck
-RUN apt-get install -y default-mysql-client
+RUN composer install --no-interaction --optimize-autoloader --no-dev
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
